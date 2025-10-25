@@ -1,0 +1,10 @@
+@Server_HostAddress = http://localhost:4000
+
+POST {{Server_HostAddress}}/graphql
+Content-Type: application/json
+
+{
+  "query": "query { products { id name description price createdAt } }"
+}
+
+###
