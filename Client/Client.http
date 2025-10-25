@@ -1,0 +1,41 @@
+@Client_HostAddress = http://localhost:8080
+
+### Get all products
+GET {{Client_HostAddress}}/api/products
+Accept: application/json
+
+### Get all products with search
+GET {{Client_HostAddress}}/api/products?search=test
+Accept: application/json
+
+### Get product by ID
+GET {{Client_HostAddress}}/api/products/1
+Accept: application/json
+
+### Create product
+POST {{Client_HostAddress}}/api/products
+Content-Type: application/json
+
+{
+  "name": "New Product",
+  "description": "Product description",
+  "price": 99.99,
+  "stock": 10
+}
+
+### Update product
+PUT {{Client_HostAddress}}/api/products/1
+Content-Type: application/json
+
+{
+  "name": "Updated Product",
+  "description": "Updated description",
+  "price": 149.99,
+  "stock": 20
+}
+
+### Delete product
+DELETE {{Client_HostAddress}}/api/products/1
+Accept: application/json
+
+###
