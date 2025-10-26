@@ -1,72 +1,49 @@
-using GraphQL;
-using GraphQL.Types;
-using Server.GraphQL.Types;
-using Server.Models;
 using Server.Data;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+using Server.Models;
+using Server.GraphQL.Types;
 
 namespace Server.GraphQL.Mutations
 {
-    public class ProductMutation : ObjectGraphType
+    public class ProductMutation
     {
-        public ProductMutation()
+        public async Task<Product> CreateProduct(ProductContext context, ProductInput product)
         {
-            Field<ProductType>("createProduct")
-                .Argument<NonNullGraphType<ProductInputType>>("product")
-                .ResolveAsync(async context =>
-                {
-                    var dbContext = context.RequestServices!.GetRequiredService<ProductContext>();
-                    var productInput = context.GetArgument<Dictionary<string, object>>("product");
-                    var product = new Product
-                    {
-                        Name = productInput["name"].ToString() ?? "",
-                        Description = productInput.TryGetValue("description", out var desc) ? desc.ToString() : "",
-                        Price = Convert.ToDecimal(productInput["price"]),
-                        CreatedAt = DateTime.UtcNow
-                    };
+            var newProduct = new Product
+            {
+                Name = product.Name,
+                Description = product.Description ?? string.Empty,
+                Price = product.Price,
+                CreatedAt = DateTime.UtcNow
+            };
 
-                    dbContext.Products.Add(product);
-                    await dbContext.SaveChangesAsync();
-                    return product;
-                });
+            context.Products.Add(newProduct);
+            await context.SaveChangesAsync();
+            return newProduct;
+        }
 
-            Field<ProductType>("updateProduct")
-                .Argument<NonNullGraphType<IntGraphType>>("id")
-                .Argument<NonNullGraphType<ProductInputType>>("product")
-                .ResolveAsync(async context =>
-                {
-                    var dbContext = context.RequestServices!.GetRequiredService<ProductContext>();
-                    var id = context.GetArgument<int>("id");
-                    var productInput = context.GetArgument<Dictionary<string, object>>("product");
+        public async Task<Product?> UpdateProduct(ProductContext context, int id, ProductInput product)
+        {
+            var existingProduct = await context.Products.FindAsync(id);
+            if (existingProduct == null)
+                return null;
 
-                    var product = await dbContext.Products.FindAsync(id);
-                    if (product == null)
-                        throw new ExecutionError("Product not found");
+            existingProduct.Name = product.Name;
+            existingProduct.Description = product.Description ?? string.Empty;
+            existingProduct.Price = product.Price;
 
-                    product.Name = productInput["name"].ToString() ?? product.Name;
-                    product.Description = productInput.TryGetValue("description", out var desc) ? desc.ToString() : product.Description;
-                    product.Price = Convert.ToDecimal(productInput["price"]);
+            await context.SaveChangesAsync();
+            return existingProduct;
+        }
 
-                    await dbContext.SaveChangesAsync();
-                    return product;
-                });
-            
-            Field<BooleanGraphType>("deleteProduct")
-                .Argument<NonNullGraphType<IntGraphType>>("id")
-                .ResolveAsync(async context =>
-                {
-                    var dbContext = context.RequestServices!.GetRequiredService<ProductContext>();
-                    var id = context.GetArgument<int>("id");
-                    var product = await dbContext.Products.FindAsync(id);
-                    
-                    if (product == null)
-                        return false;
+        public async Task<bool> DeleteProduct(ProductContext context, int id)
+        {
+            var product = await context.Products.FindAsync(id);
+            if (product == null)
+                return false;
 
-                    dbContext.Products.Remove(product);
-                    await dbContext.SaveChangesAsync();
-                    return true;
-                });
+            context.Products.Remove(product);
+            await context.SaveChangesAsync();
+            return true;
         }
     }
 }

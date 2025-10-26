@@ -1,10 +1,4 @@
-using GraphQL;
-using GraphQL.MicrosoftDI;
-using GraphQL.SystemTextJson;
 using Server.Data;
-using Server.GraphQL;
-using Server.GraphQL.Types;
-using Server.GraphQL.Schemas;
 using Server.GraphQL.Queries;
 using Server.GraphQL.Mutations;
 using Microsoft.EntityFrameworkCore;
@@ -18,17 +12,12 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<ProductContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add GraphQL services
-builder.Services.AddSingleton<ProductType>();
-builder.Services.AddSingleton<ProductInputType>();
-builder.Services.AddSingleton<ProductQuery>();
-builder.Services.AddSingleton<ProductMutation>();
-builder.Services.AddSingleton<ProductSchema>();
-
-builder.Services.AddGraphQL(b => b
-    .AddSystemTextJson()
-    .AddSchema<ProductSchema>()
-    .AddGraphTypes(typeof(ProductSchema).Assembly));
+// Add Hot Chocolate GraphQL services
+builder.Services
+    .AddGraphQLServer()
+    .AddQueryType<ProductQuery>()
+    .AddMutationType<ProductMutation>()
+    .RegisterDbContext<ProductContext>();
 
 var app = builder.Build();
 
@@ -38,8 +27,8 @@ var app = builder.Build();
 app.UseAuthorization();
 app.MapControllers();
 
-// Configure GraphQL endpoint
-app.UseGraphQL<ProductSchema>();
+// Configure Hot Chocolate GraphQL endpoint
+app.MapGraphQL();
 
 // Ensure database is created
 using (var scope = app.Services.CreateScope())
