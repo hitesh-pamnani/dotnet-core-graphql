@@ -1,0 +1,35 @@
+schema {
+  query: ProductQuery
+  mutation: ProductMutation
+}
+
+type ProductQuery {
+  products(search: String): [Product!]!
+  product(id: Int!): Product
+}
+
+type ProductMutation {
+  createProduct(product: ProductInput!): Product!
+  updateProduct(id: Int! product: ProductInput!): Product
+  deleteProduct(id: Int!): Boolean!
+}
+
+input ProductInput {
+  name: String!
+  price: Decimal!
+  description: String
+}
+
+type Product {
+  id: Int!
+  name: String!
+  price: Decimal!
+  description: String!
+  createdAt: DateTime!
+}
+
+"The `DateTime` scalar represents an ISO-8601 compliant date time type."
+scalar DateTime
+
+"The built-in `Decimal` scalar type."
+scalar Decimal

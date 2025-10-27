@@ -1,22 +1,49 @@
 # .NET Core GraphQL API
 
-A full-stack GraphQL application built with .NET 8, Hot Chocolate GraphQL, Entity Framework Core, and PostgreSQL. The project demonstrates a complete GraphQL implementation with both server and client components for managing products.
+A full-stack GraphQL application built with .NET 8, Hot Chocolate GraphQL, Entity Framework Core, and PostgreSQL. This project demonstrates a modern GraphQL implementation with a Hot Chocolate server and a StrawberryShake client, showcasing type-safe GraphQL development with automatic code generation, compile-time validation, and seamless integration between server and client components.
 
 ## 🏗️ Architecture
 
 The solution consists of two main projects:
 
-- **Server**: Hot Chocolate GraphQL API server with Entity Framework Core and PostgreSQL
-- **Client**: Web API client that consumes the GraphQL server
+- **Server**: Hot Chocolate GraphQL API server with Entity Framework Core and PostgreSQL backend
+- **Client**: ASP.NET Core Web API that acts as a GraphQL client using StrawberryShake for type-safe operations
+
+### Why StrawberryShake?
+
+StrawberryShake is Microsoft's official .NET GraphQL client that provides:
+- **Compile-time safety** with generated strongly-typed C# code
+- **Automatic synchronization** between GraphQL schema and client code
+- **Optimal performance** with built-in caching and HTTP optimizations
+- **Developer productivity** through IntelliSense and compile-time validation
+- **Seamless integration** with .NET dependency injection and logging
 
 ## 🚀 Features
 
+### Server Features
 - **Hot Chocolate GraphQL API** with queries and mutations
 - **Entity Framework Core** with PostgreSQL database
 - **Product Management** (CRUD operations)
+- **GraphQL Playground** for interactive API exploration
 - **Docker Support** for containerized deployment
-- **RESTful Client** that demonstrates GraphQL consumption
+
+### Client Features
+- **StrawberryShake GraphQL Client** with type-safe code generation
+- **Compile-time GraphQL validation** and IntelliSense support
+- **Automatic code generation** from GraphQL schema and operations
+- **Built-in entity store** for caching and state management
+- **RESTful API wrapper** that demonstrates GraphQL consumption
 - **Search Functionality** for products by name
+- **Strongly-typed models** and operation results
+
+### StrawberryShake Advantages
+
+✅ **Type Safety**: Compile-time validation prevents runtime GraphQL errors  
+✅ **IntelliSense**: Full IDE support with auto-completion  
+✅ **Performance**: Optimized HTTP transport and caching  
+✅ **Maintainability**: Automatic code updates when schema changes  
+✅ **Developer Experience**: No manual model mapping required  
+✅ **Error Handling**: Structured error responses with detailed information
 
 ## 📋 Prerequisites
 
@@ -292,10 +319,16 @@ mutation {
 │   ├── Models/                # Data models
 │   └── Program.cs             # Application entry point
 ├── Client/                    # REST API Client
+│   ├── .config/               # dotnet tools configuration
 │   ├── Controllers/           # API controllers
+│   ├── Generated/             # StrawberryShake generated code
+│   ├── GraphQL/               # GraphQL operations and schema
+│   │   ├── Operations/        # GraphQL queries and mutations
+│   │   ├── schema.graphql     # GraphQL schema
+│   │   └── schema.extensions.graphql # Schema extensions
 │   ├── Models/                # Client models
 │   ├── Services/              # GraphQL client services
-│   └── Responses/             # Response models
+│   └── .graphqlrc.json        # StrawberryShake configuration
 └── README.md
 ```
 
@@ -310,8 +343,9 @@ mutation {
 
 **Client**:
 
-- `GraphQL.Client` (6.1.0) - GraphQL client
-- `GraphQL.Client.Serializer.SystemTextJson` (6.1.0) - JSON serialization
+- `StrawberryShake.Transport.Http` (15.1.11) - StrawberryShake GraphQL client
+- `Microsoft.Extensions.Http` (9.0.10) - HTTP client factory
+- `Microsoft.Extensions.DependencyInjection` (9.0.10) - Dependency injection
 
 ### Adding Migrations
 
@@ -321,6 +355,205 @@ dotnet ef migrations add InitialCreate
 dotnet ef database update
 ```
 
+### StrawberryShake Code Generation
+
+The client uses StrawberryShake for type-safe GraphQL client generation:
+
+```bash
+cd Client
+# Install StrawberryShake tools
+dotnet tool restore
+
+# Generate client code from GraphQL schema
+dotnet graphql generate
+```
+
+**GraphQL Operations** (located in `Client/GraphQL/Operations/`):
+- `GetProducts.graphql` - Query all products with optional search
+- `GetProduct.graphql` - Query single product by ID
+- `CreateProduct.graphql` - Create new product
+- `UpdateProduct.graphql` - Update existing product
+- `DeleteProduct.graphql` - Delete product by ID
+
+**Configuration** (`.graphqlrc.json`):
+```json
+{
+  "schema": "GraphQL/schema.graphql",
+  "documents": "GraphQL/**/*.graphql",
+  "extensions": {
+    "strawberryShake": {
+      "name": "ProductsClient",
+      "namespace": "Client",
+      "url": "http://localhost:4000/graphql"
+    }
+  }
+}
+```
+
+## 🍓 StrawberryShake GraphQL Client
+
+### Overview
+
+The client project uses **StrawberryShake**, a .NET GraphQL client that generates strongly-typed C# code from GraphQL operations. This provides compile-time safety, IntelliSense support, and eliminates runtime errors from typos in GraphQL queries.
+
+### Key Features
+
+- **Type-Safe Code Generation**: Automatically generates C# classes from GraphQL schema
+- **Compile-Time Validation**: Catches GraphQL errors at build time
+- **IntelliSense Support**: Full IDE support for GraphQL operations
+- **Entity Store**: Built-in caching and state management
+- **HTTP Transport**: Optimized HTTP client for GraphQL requests
+
+### Generated Code Structure
+
+```
+Client/Generated/
+└── ProductsClient.Client.cs    # Generated client code
+    ├── IProductsClient         # Main client interface
+    ├── ProductsClient          # Client implementation
+    ├── Query/Mutation classes  # Operation-specific classes
+    ├── Result classes          # Strongly-typed results
+    └── Input classes           # Input type definitions
+```
+
+### Usage Example
+
+```csharp
+// Dependency injection setup (Program.cs)
+builder.Services
+    .AddProductsClient()
+    .ConfigureHttpClient(client =>
+    {
+        client.BaseAddress = new Uri("http://localhost:4000/graphql");
+    });
+
+// Service implementation (ProductsService.cs)
+public class ProductsService : IProductsService
+{
+    private readonly IProductsClient _client;
+
+    public ProductsService(IProductsClient client)
+    {
+        _client = client;
+    }
+
+    public async Task<IEnumerable<Product>> GetAllProductsAsync(string? search = null)
+    {
+        var result = await _client.GetProducts.ExecuteAsync(search);
+        return result.Data.Products?.Select(MapToProduct) ?? Enumerable.Empty<Product>();
+    }
+}
+```
+
+### GraphQL Operations
+
+**Query Operations**:
+- `GetProducts` - Retrieve all products with optional search filter
+- `GetProduct` - Retrieve single product by ID
+
+**Mutation Operations**:
+- `CreateProduct` - Create new product
+- `UpdateProduct` - Update existing product
+- `DeleteProduct` - Delete product by ID
+
+### Configuration Files
+
+**`.graphqlrc.json`** - StrawberryShake configuration:
+```json
+{
+  "schema": "GraphQL/schema.graphql",
+  "documents": "GraphQL/**/*.graphql",
+  "extensions": {
+    "strawberryShake": {
+      "name": "ProductsClient",
+      "namespace": "Client",
+      "url": "http://localhost:4000/graphql",
+      "records": {
+        "inputs": false,
+        "entities": false
+      }
+    }
+  }
+}
+```
+
+**`.config/dotnet-tools.json`** - Required tools:
+```json
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "strawberryshake.tools": {
+      "version": "15.1.11",
+      "commands": ["dotnet-graphql"]
+    }
+  }
+}
+```
+
+### Code Generation Commands
+
+```bash
+# Install tools
+dotnet tool restore
+
+# Download schema from server
+dotnet graphql download http://localhost:4000/graphql
+
+# Generate client code
+dotnet graphql generate
+
+# Build project (triggers automatic generation)
+dotnet build
+```
+
+### Development Workflow
+
+1. **Start the GraphQL Server**:
+   ```bash
+   cd Server
+   dotnet run
+   ```
+
+2. **Update GraphQL Operations** (if needed):
+   - Modify `.graphql` files in `Client/GraphQL/Operations/`
+   - Add new queries or mutations as required
+
+3. **Regenerate Client Code**:
+   ```bash
+   cd Client
+   dotnet graphql generate
+   ```
+
+4. **Update Service Layer**:
+   - Modify `ProductsService.cs` to use new operations
+   - Update mapping logic if schema changes
+
+5. **Build and Test**:
+   ```bash
+   dotnet build
+   dotnet run
+   ```
+
+### Schema Evolution
+
+When the GraphQL schema changes:
+
+1. **Download Updated Schema**:
+   ```bash
+   dotnet graphql download http://localhost:4000/graphql
+   ```
+
+2. **Review Changes**:
+   - Check `schema.graphql` for modifications
+   - Update operations if breaking changes exist
+
+3. **Regenerate and Fix**:
+   ```bash
+   dotnet graphql generate
+   dotnet build  # Fix any compilation errors
+   ```
+
 ## 🧪 Testing
 
 ### Using Postman
@@ -328,12 +561,14 @@ dotnet ef database update
 Import the provided Postman collection:
 
 - `Server/GraphQL-API.postman_collection.json`
+- `Client/Client.postman_collection.json`
 
 ### Manual Testing
 
 1. Start the server
 2. Navigate to `http://localhost:4000/graphql`
 3. Use the GraphQL Playground to test queries and mutations
+4. Test the client API at `http://localhost:8080/swagger`
 
 ## 🐳 Docker Deployment
 
@@ -348,8 +583,24 @@ docker run -p 4000:4000 graphql-server
 ## 📝 API Documentation
 
 - **GraphQL Playground**: Available at `/graphql` when running in development
-- **Swagger UI**: Available for the client API
+- **Swagger UI**: Available for the client API at `/swagger`
 - **Postman Collections**: Included in both Server and Client projects
+- **Generated Documentation**: StrawberryShake generates comprehensive XML documentation
+- **Schema Introspection**: Full GraphQL schema available via introspection queries
+
+### API Endpoints
+
+**GraphQL Server** (`http://localhost:4000`):
+- `/graphql` - GraphQL endpoint
+- `/graphql` - GraphQL Playground (development only)
+
+**REST Client** (`http://localhost:8080`):
+- `GET /api/products` - Get all products (with optional search)
+- `GET /api/products/{id}` - Get product by ID
+- `POST /api/products` - Create new product
+- `PUT /api/products/{id}` - Update product
+- `DELETE /api/products/{id}` - Delete product
+- `/swagger` - Swagger UI documentation
 
 ## 🔧 Troubleshooting
 
@@ -370,6 +621,22 @@ docker run -p 4000:4000 graphql-server
 3. **Entity Framework Issues**:
    - Run `dotnet ef database update` to apply migrations
    - Check database permissions for the user
+
+4. **StrawberryShake Issues**:
+   - Ensure server is running before generating client code
+   - Run `dotnet tool restore` to install required tools
+   - Delete `Generated/` folder and regenerate if schema changes
+   - Check `.graphqlrc.json` configuration
+   - Verify GraphQL operations syntax in `.graphql` files
+
+5. **Code Generation Issues**:
+   ```bash
+   # Clean and regenerate
+   dotnet clean
+   rm -rf Generated/
+   dotnet graphql generate
+   dotnet build
+   ```
 
 ## 📄 License
 

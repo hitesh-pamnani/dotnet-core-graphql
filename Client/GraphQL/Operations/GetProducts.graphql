@@ -1,0 +1,9 @@
+query GetProducts($search: String) {
+  products(search: $search) {
+    id
+    name
+    description
+    price
+    createdAt
+  }
+}
