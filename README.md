@@ -29,55 +29,58 @@ The solution consists of two main projects:
 ### PostgreSQL Installation and Configuration
 
 1. **Install PostgreSQL** (if not already installed):
+
    ```bash
    # macOS (using Homebrew)
    brew install postgresql
-   
+
    # Ubuntu/Debian
    sudo apt-get install postgresql postgresql-contrib
-   
+
    # Windows - Download from https://www.postgresql.org/download/windows/
    ```
 
 2. **Start PostgreSQL service**:
+
    ```bash
    # macOS
    brew services start postgresql
-   
+
    # Ubuntu/Debian
    sudo systemctl start postgresql
    sudo systemctl enable postgresql
    ```
 
 3. **Create database and user**:
+
    ```sql
    -- Connect to PostgreSQL as superuser
    sudo -u postgres psql
-   
+
    -- Create database
    CREATE DATABASE "products-db";
-   
+
    -- Create user
    CREATE USER "products-user" WITH PASSWORD 'Products@123';
-   
+
    -- Grant database ownership to user
    ALTER DATABASE "products-db" OWNER TO "products-user";
-   
+
    -- Grant all privileges on database
    GRANT ALL PRIVILEGES ON DATABASE "products-db" TO "products-user";
-   
+
    -- Connect to the products database
    \c products-db
-   
+
    -- Grant privileges on public schema
    GRANT ALL ON SCHEMA public TO "products-user";
    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "products-user";
    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "products-user";
-   
+
    -- Grant default privileges for future objects
    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "products-user";
    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "products-user";
-   
+
    -- Exit PostgreSQL
    \q
    ```
@@ -118,27 +121,31 @@ Update `Client/appsettings.json` if needed:
 ### Option 1: Run Locally
 
 1. **Clone the repository**:
+
    ```bash
    git clone <repository-url>
    cd dotnet-core-graphql
    ```
 
 2. **Restore dependencies**:
+
    ```bash
    # Server
    cd Server
    dotnet restore
-   
+
    # Client
    cd ../Client
    dotnet restore
    ```
 
 3. **Run the GraphQL Server**:
+
    ```bash
    cd Server
    dotnet run
    ```
+
    Server will be available at: `http://localhost:4000`
 
 4. **Run the Client** (in a new terminal):
@@ -146,7 +153,7 @@ Update `Client/appsettings.json` if needed:
    cd Client
    dotnet run
    ```
-   Client will be available at: `http://localhost:5000`
+   Client will be available at: `http://localhost:8080`
 
 ### Option 2: Using Docker
 
@@ -174,11 +181,13 @@ public class Product
 ## 🔍 GraphQL API
 
 ### Endpoint
+
 - **GraphQL Playground**: `http://localhost:4000/graphql`
 
 ### Queries
 
 **Get all products**:
+
 ```graphql
 query {
   products {
@@ -192,6 +201,7 @@ query {
 ```
 
 **Search products by name**:
+
 ```graphql
 query {
   products(search: "laptop") {
@@ -204,6 +214,7 @@ query {
 ```
 
 **Get product by ID**:
+
 ```graphql
 query {
   product(id: 1) {
@@ -219,13 +230,16 @@ query {
 ### Mutations
 
 **Create product**:
+
 ```graphql
 mutation {
-  createProduct(product: {
-    name: "Laptop"
-    price: 999.99
-    description: "High-performance laptop"
-  }) {
+  createProduct(
+    product: {
+      name: "Laptop"
+      price: 999.99
+      description: "High-performance laptop"
+    }
+  ) {
     id
     name
     price
@@ -236,13 +250,17 @@ mutation {
 ```
 
 **Update product**:
+
 ```graphql
 mutation {
-  updateProduct(id: 1, product: {
-    name: "Updated Laptop"
-    price: 1199.99
-    description: "Updated description"
-  }) {
+  updateProduct(
+    id: 1
+    product: {
+      name: "Updated Laptop"
+      price: 1199.99
+      description: "Updated description"
+    }
+  ) {
     id
     name
     price
@@ -252,6 +270,7 @@ mutation {
 ```
 
 **Delete product**:
+
 ```graphql
 mutation {
   deleteProduct(id: 1)
@@ -283,12 +302,14 @@ mutation {
 ### Key Dependencies
 
 **Server**:
+
 - `GraphQL` (8.7.0) - GraphQL implementation
 - `GraphQL.Server.Transports.AspNetCore` (8.3.2) - ASP.NET Core integration
 - `Npgsql.EntityFrameworkCore.PostgreSQL` (9.0.4) - PostgreSQL provider
 - `Microsoft.EntityFrameworkCore.Design` (9.0.10) - EF Core tools
 
 **Client**:
+
 - `GraphQL.Client` (6.1.0) - GraphQL client
 - `GraphQL.Client.Serializer.SystemTextJson` (6.1.0) - JSON serialization
 
@@ -305,6 +326,7 @@ dotnet ef database update
 ### Using Postman
 
 Import the provided Postman collection:
+
 - `Server/GraphQL-API.postman_collection.json`
 
 ### Manual Testing
@@ -334,13 +356,15 @@ docker run -p 4000:4000 graphql-server
 ### Common Issues
 
 1. **Database Connection Issues**:
+
    - Verify PostgreSQL is running
    - Check connection string in `appsettings.json`
    - Ensure database and user exist with proper permissions
 
 2. **Port Conflicts**:
+
    - Server runs on port 4000
-   - Client runs on port 5000
+   - Client runs on port 8080
    - Modify `launchSettings.json` if needed
 
 3. **Entity Framework Issues**:
@@ -362,6 +386,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ## 📞 Support
 
 For issues and questions:
+
 - Create an issue in the repository
 - Check existing documentation
 - Review the GraphQL Playground for API exploration
